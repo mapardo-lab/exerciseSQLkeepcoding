@@ -1,21 +1,26 @@
 --- EXERCISE 5
---- Se asume que interesan sólamente las ivr_id que tienen identificación asociada se realiza un 
---- inner join y se suprimen todas las entradas que tengan document_type como UNKNOWN.
---- Existen cuatro identificadores ivr_id para las que se tienen dos identificaciones diferentes.
---- A continuación de esta query se muestra el análisis realizado
-select 
-    distinct cll.ivr_id,
-    stp.document_type,
-    stp.document_identification
+--- Esta es la propuesta de consulta para este ejercicio
+with step_select_dni as (
+  select
+    ivr_id,
+    document_type,
+    document_identification
+  from keepcoding.ivr_steps
+  where step_name = 'CUSTOMERINFOBYDNI.TX' and document_type != 'UNKNOWN'
+)
+select
+  cll.ivr_id,
+  coalesce(stp.document_type,'UNKNOWN') as document_type,
+  coalesce(stp.document_identification,'UNKNOWN') as document_identification
 from keepcoding.ivr_calls cll
-inner join keepcoding.ivr_steps stp
+left join step_select_dni stp
 on cll.ivr_id = stp.ivr_id
-where stp.document_type != 'UNKNOWN'
 
---- ANALISIS IDENTIFICADOR UNICO
---- Como se quieren identificaciones únicas para cada llamada (ivr_id),
---- se comprueba que todas las llamadas tienen identificadores únicos
---- (document_type, document_identification)
+
+--- A continuación se justifica la elección de esta consulta:
+
+--- Se aplica el filtrado document_type != 'UNKNOWN' para eliminar todas las entradas sin información.
+--- Para el resto de entradas se observa que existe información duplicada para algunas llamadas (ivr_id)
 with ivrid_document as (
   select 
     distinct cll.ivr_id,
@@ -76,9 +81,10 @@ where ivr_id in (1671185617.3253191,1670865579.2748749,1671454695.29619,16714688
 select *
 from keepcoding.ivr_steps
 where ivr_id in (1671185617.3253191,1670865579.2748749,1671454695.29619,1671468858.31133)
-order by ivr_id;
+order by ivr_id, module_sequece, step_sequence;
 
---- Durante estas llamadas se aportan dos identificaciones diferentes? Llegado a este punto,
---- si esto fuera un caso real se me ocurre dejar toda la información y comentar las duplicidades
---- a la persona que vaya a recibir la información
+--- Durante estas llamadas se aportan dos identificaciones diferentes? Se decide mantener los datos
+--- de identificación de las entradas que tienen como valor en campo step_name 'CUSTOMERINFOBYDNI.TX',
+--- para que así allá un sólo identificador por llamada (campo ivr_id)
+--- En un caso real, se consultaría con la persona conveniente.
 

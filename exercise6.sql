@@ -1,16 +1,20 @@
 --- EXERCISE 6
---- Se asume que interesan sólamente las ivr_id que tienen identificación asociada se realiza un 
---- inner join y se suprimen todas las entradas que tengan document_type como UNKNOWN.
---- Todas las llamadas (ivr_id) tienen un identificador (customer_phone) único
-select 
-    distinct cll.ivr_id,
-    stp.customer_phone,
+--- EXERCISE 6
+with step_select_dni as (
+  select
+    ivr_id,
+    customer_phone,
+  from keepcoding.ivr_steps
+  where customer_phone != 'UNKNOWN'
+)
+select
+  cll.ivr_id,
+  coalesce(stp.customer_phone,'UNKNOWN') as customer_phone,
 from keepcoding.ivr_calls cll
-inner join keepcoding.ivr_steps stp
-on cll.ivr_id = stp.ivr_id
-where stp.customer_phone != 'UNKNOWN'
+left join step_select_dni stp
+on cll.ivr_id = stp.ivr_id;
 
---- ANALISIS IDENTIFICADOR ÚNICO
+--- Se comprueba que no hay duplicidades en el campo customer_phone para las llamadas
 with ivrid_document as (
   select 
     distinct cll.ivr_id,

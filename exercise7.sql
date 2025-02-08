@@ -1,16 +1,23 @@
 --- EXERCISE 7
---- Se asume que interesan sólamente las ivr_id que tienen identificación asociada se realiza un 
---- inner join y se suprimen todas las entradas que tengan document_type como UNKNOWN.
---- Todas las llamadas (ivr_id) tienen un identificador (billing_account_id) único
-select 
-    distinct cll.ivr_id,
-    stp.billing_account_id,
+--- Esta es la propuesta de consulta para este ejercicio
+with step_select_billing as (
+  select
+    ivr_id,
+    billing_account_id
+  from keepcoding.ivr_steps
+  where step_name='CUSTOMERINFOBYPHONE.TX' and billing_account_id != 'UNKNOWN'
+)
+select
+  cll.ivr_id,
+  coalesce(stp.billing_account_id,'UNKNOWN') as billing_account_id,
 from keepcoding.ivr_calls cll
-inner join keepcoding.ivr_steps stp
-on cll.ivr_id = stp.ivr_id
-where stp.customer_phone != 'UNKNOWN';
+left join step_select_billing stp
+on cll.ivr_id = stp.ivr_id;
 
---- ANALISIS IDENTIFICADOR ÚNICO
+--- A continuación se justifica la elección de esta consulta:
+
+--- Se aplica el filtrado billing_account_id != 'UNKNOWN' para eliminar todas las entradas sin información.
+--- Para el resto de entradas se observa que existe información duplicada para algunas llamadas (ivr_id)
 with ivrid_document as (
   select 
     distinct cll.ivr_id,
@@ -56,6 +63,8 @@ from keepcoding.ivr_steps
 where ivr_id in (1671436840.3316121,1671532597.338573,1670871157.314419)
 order by ivr_id;
 
---- Durante estas llamadas se aportan dos identificaciones diferentes? Llegado a este punto,
---- si esto fuera un caso real se me ocurre dejar toda la información y comentar las duplicidades
---- a la persona que vaya a recibir la información
+--- Durante estas llamadas se aportan dos identificaciones diferentes? Se decide mantener los datos
+--- de identificación de las entradas que tienen como valor en campo step_name 'CUSTOMERINFOBYPHONE.TX',
+--- para que así allá un sólo identificador por llamada (campo ivr_id)
+--- En un caso real, se consultaría con la persona conveniente.
+
