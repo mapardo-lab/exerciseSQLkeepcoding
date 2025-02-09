@@ -1,5 +1,5 @@
 --- exercise 3
-select
+create table keepcoding.ivr_details as select
 	cal.ivr_id as calls_ivr_id,
 	cal.phone_number as calls_phone_number,
 	cal.ivr_result as calls_ivr_result,
